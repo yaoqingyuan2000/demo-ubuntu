@@ -1,0 +1,16 @@
+
+version: "3.7"
+services:
+  mysql80:
+    image: "mysql:8.0.25"
+    ports:
+      - "33066:3306"
+    volumes:
+      - /home/yqy/mysql/data:/var/lib/mysql
+      - /home/yqy/mysql/log:/var/log/mysql
+      - /home/yqy/mysql/conf:/etc/mysql
+      - /home/yqy/mysql/mysql-files:/var/lib/mysql-files
+
+    command:
+      # 将mysql8.0默认密码策略 修改为 原先 策略 (mysql8.0对其默认策略做了更改 会导致密码无法匹配)
+      --default-authentication-plugin=mysql_native_password
