@@ -1,9 +1,11 @@
 import pymysql
-import traceback
-from multiprocessing import Pool,Manager,cpu_count
-from multiprocessing.managers import BaseManager
-import os,sys,time
+
+import os
+import sys
+import time
 import random
+from multiprocessing import Pool, cpu_count
+
 
 conn = pymysql.connect(
     host='127.0.0.1',
