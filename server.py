@@ -2,6 +2,22 @@ import select
 import socket
 
 import time
+from threading import Thread
+import threading
+
+def send(connection):
+
+    response_body = "content".encode("utf-8")
+    response_header = "HTTP/1.1 200 OK\r\n"
+    response_header += "Content-Length: %d\r\n" % len(response_body)
+    response_header += "\r\n"
+    for i in range(25):
+        thread_name = threading.current_thread().name
+        time.sleep(1)
+        print(thread_name)
+    connection.send(response_header.encode("utf-8") + response_body)
+    
+    print("发送完成", time.time())
 
 
 response = b''  
@@ -19,7 +35,8 @@ epoll.register(serversocket.fileno(), select.EPOLLIN)
 try:  
     connections = {}
     count = 0
-    while True:  
+    while True:
+        print("==================================================================================")
         events = epoll.poll(1)
         for fileno, event in events: 
             if fileno == serversocket.fileno():  
@@ -38,25 +55,46 @@ try:
                     request += temp
                     if len(temp) < 1024:
                         break
-                print(request.decode('utf-8'))
-                if not request:
+
+                if request:
+                    epoll.modify(fileno, 0)
+                    print("================================")
+
+                    response_body = "content".encode("utf-8")
+                    response_header = "HTTP/1.1 200 OK\r\n"
+                    response_header += "Content-Length: %d\r\n" % len(response_body)
+                    response_header += "\r\n"
+                    for i in range(25):
+                        time.sleep(1)
+                        print("-------------------------------------")
+                    connections[fileno].send(response_header.encode("utf-8") + response_body)
+
+                    # epoll.modify(fileno, select.EPOLLIN)
+                    # t = Thread(target=send, args=(connections[fileno],))
+                    # t.start()
+                else:
                     epoll.unregister(fileno)  
                     connections[fileno].close()  
                     del connections[fileno]  
                     print("断开连接")
-                else:
-                    epoll.modify(fileno, select.EPOLLOUT)
 
             elif event & select.EPOLLOUT:  
 
-                print("-------send---------")   
-                response_body = "content".encode("utf-8")
-                response_header = "HTTP/1.1 200 OK\r\n"
-                response_header += "Content-Length: %d\r\n" % len(response_body)
-                response_header += "\r\n"
-                time.sleep(10)
-                connections[fileno].send(response_header.encode("utf-8") + response_body)
-                epoll.modify(fileno, select.EPOLLIN) 
+                print("-------send---------")
+                # response_body = "content".encode("utf-8")
+                # response_header = "HTTP/1.1 200 OK\r\n"
+                # response_header += "Content-Length: %d\r\n" % len(response_body)
+                # response_header += "\r\n"
+                # connections[fileno].send(response_header.encode("utf-8") + response_body)
+                # epoll.modify(fileno, select.EPOLLIN) 
+
+                # print("================================")
+                # epoll.modify(fileno, select.EPOLLIN)
+                # t = Thread(target=send, args=(connections[fileno],))
+                # t.start()
+                # t.join()
+                
+
 finally:  
     epoll.unregister(serversocket.fileno())  
     epoll.close()  
