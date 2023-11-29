@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-import torch.functional as F    
+import torch.nn.functional as F
 import math
 import cv2 as cv
 import numpy as np
@@ -64,6 +64,21 @@ def bbox_iou(box1, box2, xywh=True, GIoU=False, DIoU=False, CIoU=False, eps=1e-7
         return iou - (c_area - union) / c_area 
     return iou  # IoU
 
+
+def dist2bbox(distance, anchor_points, xywh=True, dim=-1):
+    """Transform distance(ltrb) to box(xywh or xyxy)."""
+    lt, rb = distance.chunk(2, dim)
+    x1y1 = anchor_points - lt
+    x2y2 = anchor_points + rb
+    if xywh:
+        c_xy = (x1y1 + x2y2) / 2
+        wh = x2y2 - x1y1
+        return torch.cat((c_xy, wh), dim)  # xywh bbox
+    return torch.cat((x1y1, x2y2), dim)  # xyxy bbox
+
+
+
+
 class BboxLoss(nn.Module):
 
     def __init__(self, reg_max, use_dfl=False):
@@ -76,6 +91,8 @@ class BboxLoss(nn.Module):
         """IoU loss."""
         weight = target_scores.sum(-1)[fg_mask].unsqueeze(-1)
         iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
+
+        print("----------------------------------------", iou.flatten().sum())
         loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
 
         # DFL loss
@@ -111,38 +128,57 @@ class YOLOV8DetectionLoss:
         self.stride = 32
 
         self.reg_max = 16
+        
+        self.nc = 15
+        self.no = nc + self.reg_max * 4 
 
         self.device = "cpu"
 
-        self.topk=10 
-        self.alpha=0.5
-        self.beta=6.0
+        self.topk = 10 
+        self.alpha = 0.5
+        self.beta = 6.0
 
-        self.num_classes = 8
+        self.num_classes = 15
 
         self.eps = 1e-9
 
-        self.bbox_loss = BboxLoss(self.reg_max - 1, True).to(self.device)
+        self.use_dfl = self.reg_max > 1
+
+        self.bbox_loss = BboxLoss(self.reg_max - 1, use_dfl=self.use_dfl).to(self.device)
+
+        self.proj = torch.arange(self.reg_max, dtype=torch.float, device=self.device)
 
     def __call__(self, preds, batch):
 
         """Calculate the sum of the loss for box, cls and dfl multiplied by batch size."""
-        # loss = torch.zeros(3, device=self.device)  # box, cls, dfl
-        feats = preds[1] if isinstance(preds, tuple) else preds
+
+        self.image = batch["image"]
+        self.stride = preds["strides"]
+
+        
+        self.bs = 2
+        self.num_anchors = 8400
+
+        loss = torch.zeros(3, device=self.device)  # box, cls, dfl
+        # feats = preds[1] if isinstance(preds, tuple) else preds
+        feats = preds["feats"]
 
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1)
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
+        pred_scores = pred_scores.permute(0, 2, 1).contiguous()
+        print("pred_distri:", pred_distri.size())
+        print("pred_scores:", pred_scores.size())
 
-        # pred_scores = pred_scores.permute(0, 2, 1).contiguous()
-        
+        pred_scores.clamp_(0)
 
-        # dtype = pred_scores.dtype
-        # batch_size = pred_scores.shape[0]
+        dtype = pred_scores.dtype
+        batch_size = pred_scores.shape[0]
 
         # imgsz = torch.tensor(feats[0].shape[2:], device=self.device, dtype=dtype) * self.stride[0]  # image size (h,w)
         
-        # anchor_points, stride_tensor = self.make_anchors(feats, self.stride, 0.5)
+        anchor_points, stride_tensor = self.make_anchors(feats, self.stride, 0.5)
+        print("anchor_points", anchor_points.size())
 
         # # targets
         # targets = torch.cat((batch['batch_idx'].view(-1, 1), batch['cls'].view(-1, 1), batch['bboxes']), 1)
@@ -151,31 +187,15 @@ class YOLOV8DetectionLoss:
         # gt_labels, gt_bboxes = targets.split((1, 4), 2)  # cls, xyxy
         # gt_mask = gt_bboxes.sum(2, keepdim=True).gt_(0)
 
-
-        # # pboxes
-        # pred_bboxes = self.bbox_decode(anchor_points, pred_distri)  # xyxy, (b, h*w, 4)
-
-        self.stride = preds["strides"]
-
-        feats = preds["feats"]
-        
-
-        anchor_points, stride_tensor = self.make_anchors(feats, self.stride, 0.5)
         gt_labels = batch["gt_labels"]
         gt_bboxes = batch["gt_bboxes"]
-        pred_scores = preds["pd_scores"]
-        pred_bboxes = preds["pd_bboxes"]
-
         gt_mask = batch["gt_mask"]
 
-        print("anchor_points", anchor_points.size())
-
-
-        self.image = batch["image"]
-
         self.max_num_obj = gt_bboxes.size(1)
-        self.bs = 2
-        self.num_anchors = 8400
+
+        # pboxes
+        pred_bboxes = self.bbox_decode(anchor_points, pred_distri)  # xyxy, (b, h*w, 4)
+        # pred_bboxes.clamp_(0)
 
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
 
@@ -188,21 +208,23 @@ class YOLOV8DetectionLoss:
         
         target_scores_sum = max(target_scores.sum(), 1)
 
-        dtype = pred_scores.dtype
-
         loss[1] = self.bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # BCE
         print("cls loss:", loss[1])
 
+
+        print("------------------------------------------", fg_mask.sum())
         # bbox loss
         if fg_mask.sum():
             target_bboxes /= stride_tensor
             loss[0], loss[2] = self.bbox_loss(pred_distri, pred_bboxes, anchor_points, target_bboxes, target_scores,
                                               target_scores_sum, fg_mask)
 
-        loss[0] *= self.hyp.box  # box gain
-        loss[1] *= self.hyp.cls  # cls gain
-        loss[2] *= self.hyp.dfl  # dfl gain
+        # loss[0] *= self.hyp.box  # box gain
+        # loss[1] *= self.hyp.cls  # cls gain
+        # loss[2] *= self.hyp.dfl  # dfl gain
 
+        print("box loss:", loss[0])
+        print("dfl loss:", loss[2])
 
     def assigner(self, pd_scores, pd_bboxes, anchor_points, gt_labels, gt_bboxes, gt_mask):
 
@@ -230,6 +252,8 @@ class YOLOV8DetectionLoss:
 
         overlaps, align_metric = self.get_box_metrics(pd_scores, pd_bboxes, gt_labels, gt_bboxes, an_mask * gt_mask)
 
+        
+
         print("align_metric:", align_metric.size())
         print("overlaps:", overlaps.size())
 
@@ -237,7 +261,6 @@ class YOLOV8DetectionLoss:
         # for box in gt_bboxes[0]:
         #     cv.rectangle(self.image, (int(box[0].item()), int(box[1].item())), 
         #                              (int(box[2].item()), int(box[3].item())), (0, 255, 0), 2, 8)
-
         # temp_mask = an_mask * gt_mask
 
         # for i, metric in enumerate(align_metric[0]):
@@ -263,26 +286,31 @@ class YOLOV8DetectionLoss:
         topk_mask = self.select_topk_candidates(align_metric, topk_mask)
         print("topk_mask:", topk_mask.size())
 
+        print("----------", topk_mask.flatten().sum())
+
         mask = gt_mask * an_mask * topk_mask
+
+        print("----------", mask.flatten().sum())
 
         print("mask:", mask.size())
 
         target_gt_idx, fg_mask, mask_pos = self.select_highest_overlaps(overlaps, mask, self.max_num_obj)
 
+        print("----------", fg_mask.flatten().sum())
+
         print("fg_mask:", fg_mask.size())
+        print("mask_pos:", mask_pos.size())
 
         target_labels, target_bboxes, target_scores = self.get_target(gt_labels, gt_bboxes, target_gt_idx, fg_mask)
 
         print("target_labels:", target_labels.size())
         print("target_bboxes:", target_bboxes.size())
 
-
+        
         # Normalize
         align_metric *= mask_pos
-        # print(align_metric)
         pos_align_metrics = align_metric.amax(axis=-1, keepdim=True)  # b, max_num_obj
         pos_overlaps = (overlaps * mask_pos).amax(axis=-1, keepdim=True)  # b, max_num_obj
-        # print((align_metric * pos_overlaps) / (pos_align_metrics + self.eps))
         norm_align_metric = (align_metric * pos_overlaps / (pos_align_metrics + self.eps)).amax(-2).unsqueeze(-1)
         target_scores = target_scores * norm_align_metric
 
@@ -374,6 +402,7 @@ class YOLOV8DetectionLoss:
         print("bbox_scores:", bbox_scores.size())
 
         print("pd_bboxes", pd_bboxes.size())
+
         pd_boxes = pd_bboxes.unsqueeze(1).expand(-1, self.num_max_boxes, -1, -1)[mask]
 
         gt_boxes = gt_bboxes.unsqueeze(2).expand(-1, -1, num_anchors, -1)[mask]
@@ -382,7 +411,11 @@ class YOLOV8DetectionLoss:
         # 
         overlaps[mask] = bbox_iou(gt_boxes, pd_boxes, xywh=False, CIoU=True).squeeze(-1).clamp_(0)
 
+        print("==================", overlaps[mask].sum())
+
         align_metric = bbox_scores.pow(self.alpha) * overlaps.pow(self.beta)
+
+        print("==================", align_metric.flatten().sum())
 
         return overlaps, align_metric
 
@@ -410,26 +443,92 @@ class YOLOV8DetectionLoss:
             stride_tensor.append(torch.full((h * w, 1), stride, dtype=dtype, device=device))
         return torch.cat(anchor_points), torch.cat(stride_tensor)
 
-
+    def bbox_decode(self, anchor_points, pred_dist):
+        """Decode predicted object bounding box coordinates from anchor points and distribution."""
+        if self.use_dfl:
+            b, a, c = pred_dist.shape  # batch, anchors, channels
+            pred_dist = pred_dist.view(b, a, 4, c // 4).softmax(3).matmul(self.proj.type(pred_dist.dtype))
+            # pred_dist = pred_dist.view(b, a, c // 4, 4).transpose(2,3).softmax(3).matmul(self.proj.type(pred_dist.dtype))
+            # pred_dist = (pred_dist.view(b, a, c // 4, 4).softmax(2) * self.proj.type(pred_dist.dtype).view(1, 1, -1, 1)).sum(2)
+        return dist2bbox(pred_dist, anchor_points, xywh=False)
 
 
 
 # %%
 
-num_class = 8
+
 batch_size = 2
+feats = [torch.rand((batch_size, 256, 80, 80)), 
+         torch.rand((batch_size, 512, 40, 40)), 
+         torch.rand((batch_size, 512, 20, 20))]
+
+s = 640
+strides = torch.tensor([s / x.shape[-2] for x in feats])
 
 
-pd_bboxes = torch.randint(0, 650, (batch_size, 80 * 80 + 40 * 40 + 20 * 20, 4))
-pd_bboxes = pd_bboxes.float()
-pd_scores = torch.rand((batch_size, 80 * 80 + 40 * 40 + 20 * 20, num_class))
+def autopad(k, p=None, d=1):  # kernel, padding, dilation
+    """Pad to 'same' shape outputs."""
+    if d > 1:
+        k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]  # actual kernel-size
+    if p is None:
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]  # auto-pad
+    return p
+
+class Conv(nn.Module):
+    """Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)."""
+    default_act = nn.SiLU()  # default activation
+
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        """Initialize Conv layer with given arguments including activation."""
+        super().__init__()
+        self.conv = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+    def forward(self, x):
+        """Apply convolution, batch normalization and activation to input tensor."""
+        return self.act(self.bn(self.conv(x)))
+
+    def forward_fuse(self, x):
+        """Perform transposed convolution of 2D data."""
+        return self.act(self.conv(x))
+    
+
+ch = (256, 512, 512)
+
+reg_max = 16 
+nc = 15
+
+c2, c3 = max((16, ch[0] // 4, reg_max * 4)), max(ch[0], min(nc, 100))
+
+print(c2, c3)
+
+cv2 = nn.ModuleList(
+    nn.Sequential(
+        Conv(x, c2, 3), 
+        Conv(c2, c2, 3),
+        nn.Conv2d(c2, 4 * reg_max, 1)) for x in ch)
+
+cv3 = nn.ModuleList(
+    nn.Sequential(
+        Conv(x, c3, 3), 
+        Conv(c3, c3, 3),
+        nn.Conv2d(c3, nc, 1)) for x in ch)
 
 
-gt_labels = torch.randint(0, num_class, (2, 3, 1))
+for i in range(len(ch)):
+    print(cv2[i](feats[i]).size(),cv3[i](feats[i]).size())
+    print(torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1).size())
+    feats[i] = torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1)
+
+
+
+
+gt_labels = torch.randint(0, nc, (2, 3, 1))
 gt_labels[0,2,0] = 0
 
-
 gt_bboxes = torch.randint(0, 320, (batch_size, 3, 4))
+
 gt_bboxes[0,0] = torch.tensor([280, 280, 360, 360])
 gt_bboxes[0,1] = torch.tensor([10, 10, 260, 260])
 gt_bboxes[0,2] = torch.tensor([10, 10, 100, 100])
@@ -450,15 +549,8 @@ input = torch.rand((batch_size, 3, 640, 640))
 print("input:", input.size())
 
 print("gt_labels:", gt_labels.size())
-# print(gt_labels)
 print("gt_bboxes:", gt_bboxes.size())
-# print(gt_bboxes)
-
 print("gt_mask:", gt_mask.size())
-
-print("pd_scores:", pd_scores.size())
-print("pd_bboxes:", pd_bboxes.size())
-
 
 
 for box in (gt_bboxes * gt_mask)[0]:
@@ -468,15 +560,9 @@ for box in (gt_bboxes * gt_mask)[0]:
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
-feats = [torch.rand((batch_size, 256, 80, 80)), 
-         torch.rand((batch_size, 512, 40, 40)), 
-         torch.rand((batch_size, 512, 20, 20))]
-s = 640
-strides = torch.tensor([s / x.shape[-2] for x in feats])  # forward
+gt_bboxes = gt_bboxes.float()
 
-
-preds = {"pd_scores": pd_scores, "pd_bboxes": pd_bboxes,
-         "feats": feats, "strides": strides}
+preds = {"feats": feats,"strides": strides}
 batch = {"gt_labels": gt_labels, "gt_bboxes": gt_bboxes, "gt_mask": gt_mask, "image": image}
 
 loss = YOLOV8DetectionLoss()
