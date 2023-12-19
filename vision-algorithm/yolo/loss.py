@@ -457,13 +457,7 @@ class YOLOV8DetectionLoss:
 # %%
 
 
-batch_size = 2
-feats = [torch.rand((batch_size, 256, 80, 80)), 
-         torch.rand((batch_size, 512, 40, 40)), 
-         torch.rand((batch_size, 512, 20, 20))]
 
-s = 640
-strides = torch.tensor([s / x.shape[-2] for x in feats])
 
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -494,79 +488,89 @@ class Conv(nn.Module):
         return self.act(self.conv(x))
     
 
-ch = (256, 512, 512)
+if __name__ == "__main__":
 
-reg_max = 16 
-nc = 15
+    batch_size = 2
+    feats = [torch.rand((batch_size, 256, 80, 80)), 
+            torch.rand((batch_size, 512, 40, 40)), 
+            torch.rand((batch_size, 512, 20, 20))]
 
-c2, c3 = max((16, ch[0] // 4, reg_max * 4)), max(ch[0], min(nc, 100))
+    s = 640
+    strides = torch.tensor([s / x.shape[-2] for x in feats])
 
-print(c2, c3)
+    ch = (256, 512, 512)
 
-cv2 = nn.ModuleList(
-    nn.Sequential(
-        Conv(x, c2, 3), 
-        Conv(c2, c2, 3),
-        nn.Conv2d(c2, 4 * reg_max, 1)) for x in ch)
+    reg_max = 16 
+    nc = 15
 
-cv3 = nn.ModuleList(
-    nn.Sequential(
-        Conv(x, c3, 3), 
-        Conv(c3, c3, 3),
-        nn.Conv2d(c3, nc, 1)) for x in ch)
+    c2, c3 = max((16, ch[0] // 4, reg_max * 4)), max(ch[0], min(nc, 100))
 
+    print(c2, c3)
 
-for i in range(len(ch)):
-    print(cv2[i](feats[i]).size(),cv3[i](feats[i]).size())
-    print(torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1).size())
-    feats[i] = torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1)
+    cv2 = nn.ModuleList(
+        nn.Sequential(
+            Conv(x, c2, 3), 
+            Conv(c2, c2, 3),
+            nn.Conv2d(c2, 4 * reg_max, 1)) for x in ch)
 
-
-
-
-gt_labels = torch.randint(0, nc, (2, 3, 1))
-gt_labels[0,2,0] = 0
-
-gt_bboxes = torch.randint(0, 320, (batch_size, 3, 4))
-
-gt_bboxes[0,0] = torch.tensor([280, 280, 360, 360])
-gt_bboxes[0,1] = torch.tensor([10, 10, 260, 260])
-gt_bboxes[0,2] = torch.tensor([10, 10, 100, 100])
-
-gt_bboxes[1,0] = torch.tensor([230, 230, 370, 370])
-gt_bboxes[1,1] = torch.tensor([17, 17, 270, 270])
-gt_bboxes[1,2] = torch.tensor([307, 17, 357, 57])
-
-gt_mask = torch.ones((2, 3, 1))
-gt_mask[0,2,0] = 0
+    cv3 = nn.ModuleList(
+        nn.Sequential(
+            Conv(x, c3, 3), 
+            Conv(c3, c3, 3),
+            nn.Conv2d(c3, nc, 1)) for x in ch)
 
 
-width = 640
-height = 640
-image = np.zeros((height, width, 3), np.uint8)
-input = torch.rand((batch_size, 3, 640, 640))
-
-print("input:", input.size())
-
-print("gt_labels:", gt_labels.size())
-print("gt_bboxes:", gt_bboxes.size())
-print("gt_mask:", gt_mask.size())
+    for i in range(len(ch)):
+        print(cv2[i](feats[i]).size(),cv3[i](feats[i]).size())
+        print(torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1).size())
+        feats[i] = torch.cat((cv2[i](feats[i]), cv3[i](feats[i])), 1)
 
 
-for box in (gt_bboxes * gt_mask)[0]:
-    cv.rectangle(image, (int(box[0].item()), int(box[1].item())), (int(box[2].item()), int(box[3].item())), (0, 0, 255), 2)
-# cv.namedWindow('Image')
-# cv.imshow('Image', image) 
-# cv.waitKey(0)
-# cv.destroyAllWindows()
 
-gt_bboxes = gt_bboxes.float()
 
-preds = {"feats": feats,"strides": strides}
-batch = {"gt_labels": gt_labels, "gt_bboxes": gt_bboxes, "gt_mask": gt_mask, "image": image}
+    gt_labels = torch.randint(0, nc, (2, 3, 1))
+    gt_labels[0,2,0] = 0
 
-loss = YOLOV8DetectionLoss()
-loss(preds, batch)
+    gt_bboxes = torch.randint(0, 320, (batch_size, 3, 4))
+
+    gt_bboxes[0,0] = torch.tensor([280, 280, 360, 360])
+    gt_bboxes[0,1] = torch.tensor([10, 10, 260, 260])
+    gt_bboxes[0,2] = torch.tensor([10, 10, 100, 100])
+
+    gt_bboxes[1,0] = torch.tensor([230, 230, 370, 370])
+    gt_bboxes[1,1] = torch.tensor([17, 17, 270, 270])
+    gt_bboxes[1,2] = torch.tensor([307, 17, 357, 57])
+
+    gt_mask = torch.ones((2, 3, 1))
+    gt_mask[0,2,0] = 0
+
+
+    width = 640
+    height = 640
+    image = np.zeros((height, width, 3), np.uint8)
+    input = torch.rand((batch_size, 3, 640, 640))
+
+    print("input:", input.size())
+
+    print("gt_labels:", gt_labels.size())
+    print("gt_bboxes:", gt_bboxes.size())
+    print("gt_mask:", gt_mask.size())
+
+
+    for box in (gt_bboxes * gt_mask)[0]:
+        cv.rectangle(image, (int(box[0].item()), int(box[1].item())), (int(box[2].item()), int(box[3].item())), (0, 0, 255), 2)
+    # cv.namedWindow('Image')
+    # cv.imshow('Image', image) 
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+
+    gt_bboxes = gt_bboxes.float()
+
+    preds = {"feats": feats,"strides": strides}
+    batch = {"gt_labels": gt_labels, "gt_bboxes": gt_bboxes, "gt_mask": gt_mask, "image": image}
+
+    loss = YOLOV8DetectionLoss()
+    loss(preds, batch)
 
 
 
