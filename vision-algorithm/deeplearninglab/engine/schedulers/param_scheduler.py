@@ -14,8 +14,8 @@ from typing import Callable, List, Optional, Sequence, Union
 from torch.optim import Optimizer
 
 from mmengine.logging import print_log
-from mmengine.optim import BaseOptimWrapper
-from mmengine.registry import PARAM_SCHEDULERS
+from optimizers import BaseOptimWrapper
+from registry import PARAM_SCHEDULERS
 
 INF = int(1e9)
 
