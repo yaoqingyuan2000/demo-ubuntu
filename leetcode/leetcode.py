@@ -5,17 +5,9 @@ from functools import *
 class Solution:
 
 
-    def dfs(self, i: int, j: int):
+    def beautifulPartitions(self, s: str, k: int, minLength: int) -> int:
 
-        ans = 0
-
-
-        
-        return ans
-
-    def sellingWood(self, m: int, n: int, prices: List[List[int]]) -> int:
         pass
-
 
 
 

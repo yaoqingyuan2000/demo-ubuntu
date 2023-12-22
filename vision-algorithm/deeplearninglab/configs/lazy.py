@@ -2,7 +2,7 @@
 import importlib
 from typing import Any, Optional, Union
 
-from mmengine.utils import is_seq_of
+from ..utils import is_seq_of
 
 
 class LazyObject:

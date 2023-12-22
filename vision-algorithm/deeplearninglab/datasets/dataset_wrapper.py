@@ -9,8 +9,8 @@ from typing import List, Sequence, Tuple, Union
 import numpy as np
 from torch.utils.data.dataset import ConcatDataset as _ConcatDataset
 
-from mmengine.logging import print_log
-from mmengine.registry import DATASETS
+from engine.logging import print_log
+from registry import DATASETS
 from .base_dataset import BaseDataset, force_full_init
 
 

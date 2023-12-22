@@ -4,11 +4,11 @@ import os
 import tempfile
 from typing import List, Optional
 
-from mmengine.evaluator import BaseMetric
-from mmengine.utils import track_iter_progress
+from engine.evaluator import BaseMetric
+from ...utils import track_iter_progress
 from pycocotools.coco import COCO
 
-from mmdet.registry import METRICS
+from registry import METRICS
 
 try:
     from pycocoevalcap.eval import COCOEvalCap

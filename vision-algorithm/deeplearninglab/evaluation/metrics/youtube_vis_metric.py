@@ -6,14 +6,14 @@ import zipfile
 from collections import OrderedDict, defaultdict
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-import mmengine
-import numpy as np
-from mmengine.dist import (all_gather_object, barrier, broadcast_object_list,
-                           is_main_process)
-from mmengine.logging import MMLogger
 
-from mmdet.registry import METRICS
-from mmdet.structures.mask import encode_mask_results
+import numpy as np
+from engine.dist import (all_gather_object, barrier, broadcast_object_list,
+                           is_main_process)
+from engine.logging import MMLogger
+
+from registry import METRICS
+from structures.mask import encode_mask_results
 from ..functional import YTVIS, YTVISeval
 from .base_video_metric import BaseVideoMetric, collect_tracking_results
 

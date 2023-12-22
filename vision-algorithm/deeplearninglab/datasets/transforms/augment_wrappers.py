@@ -2,11 +2,11 @@
 from typing import List, Optional, Union
 
 import numpy as np
-from mmcv.transforms import RandomChoice
-from mmcv.transforms.utils import cache_randomness
-from mmengine.config import ConfigDict
+from .transforms import RandomChoice
+from .utils import cache_randomness
+from configs import ConfigDict
 
-from mmdet.registry import TRANSFORMS
+from registry import TRANSFORMS
 
 # AutoAugment uses reinforcement learning to search for
 # some widely useful data augmentation strategies,

@@ -7,10 +7,11 @@ import warnings
 from typing import Optional, Sequence
 
 import torch
-from mmengine.dist import (barrier, broadcast, broadcast_object_list,
+from engine.dist import (barrier, broadcast, broadcast_object_list,
                            get_dist_info, is_main_process)
-from mmengine.evaluator import BaseMetric
-from mmengine.utils import mkdir_or_exist
+
+from engine.evaluator import BaseMetric
+from ...utils import mkdir_or_exist
 
 
 class BaseVideoMetric(BaseMetric):

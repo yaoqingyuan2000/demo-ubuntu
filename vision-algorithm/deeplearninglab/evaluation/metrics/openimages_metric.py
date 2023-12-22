@@ -4,10 +4,10 @@ from collections import OrderedDict
 from typing import List, Optional, Sequence, Union
 
 import numpy as np
-from mmengine.evaluator import BaseMetric
-from mmengine.logging import MMLogger, print_log
+from engine.evaluator import BaseMetric
+from engine.logging import MMLogger, print_log
 
-from mmdet.registry import METRICS
+from registry import METRICS
 from ..functional import eval_map
 
 

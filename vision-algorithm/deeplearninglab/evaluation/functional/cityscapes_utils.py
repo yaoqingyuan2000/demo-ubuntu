@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-import mmcv
+from ...utils.image import imfrombytes
 import numpy as np
-from mmengine.fileio import get
+from engine.fileio import get
 
 try:
     import cityscapesscripts.evaluation.evalInstanceLevelSemanticLabeling as CSEval  # noqa: E501
@@ -159,7 +159,7 @@ def readGTImage(image_file: Union[str, Path],
         np.ndarray: The groundtruth image.
     """
     img_bytes = get(image_file, backend_args=backend_args)
-    img = mmcv.imfrombytes(img_bytes, flag='unchanged', backend='pillow')
+    img = imfrombytes(img_bytes, flag='unchanged', backend='pillow')
     return img
 
 
@@ -278,7 +278,7 @@ def instances2dict(image_list: list,
     for image_name in image_list:
         # Load image
         img_bytes = get(image_name, backend_args=backend_args)
-        imgNp = mmcv.imfrombytes(img_bytes, flag='unchanged', backend='pillow')
+        imgNp = imfrombytes(img_bytes, flag='unchanged', backend='pillow')
 
         # Initialize label categories
         instances: dict = {}

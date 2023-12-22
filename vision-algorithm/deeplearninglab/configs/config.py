@@ -23,9 +23,9 @@ from rich.console import Console
 from rich.text import Text
 from yapf.yapflib.yapf_api import FormatCode
 
-from mmengine.fileio import dump, load
-from mmengine.logging import print_log
-from mmengine.utils import (check_file_exist, digit_version,
+from engine.fileio import dump, load
+from engine.logging import print_log
+from ..utils import (check_file_exist, digit_version,
                             get_installed_path, import_modules_from_strings,
                             is_installed)
 from .lazy import LazyAttr, LazyObject
@@ -1225,8 +1225,8 @@ class Config:
                 else:
                     base_files = []
         elif file_format in ('.yml', '.yaml', '.json'):
-            import mmengine
-            cfg_dict = mmengine.load(filename)
+            import engine
+            cfg_dict = engine.load(filename)
             base_files = cfg_dict.get(BASE_KEY, [])
         else:
             raise ConfigParsingError(

@@ -1,20 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Optional, Tuple, Union
 
-import mmcv
 import numpy as np
 import pycocotools.mask as maskUtils
 import torch
-from mmcv.transforms import BaseTransform
-from mmcv.transforms import LoadAnnotations as MMCV_LoadAnnotations
-from mmcv.transforms import LoadImageFromFile
-from mmengine.fileio import get
-from mmengine.structures import BaseDataElement
+from .base import BaseTransform
 
-from mmdet.registry import TRANSFORMS
-from mmdet.structures.bbox import get_box_type
-from mmdet.structures.bbox.box_type import autocast_box_type
-from mmdet.structures.mask import BitmapMasks, PolygonMasks
+
+from .transforms import LoadAnnotations as MMCV_LoadAnnotations
+from .transforms import LoadImageFromFile
+
+
+from ...utils import image as imopts
+from engine.fileio import get
+from structures import BaseDataElement
+
+from registry import TRANSFORMS
+from structures.bbox import get_box_type
+from structures.bbox.box_type import autocast_box_type
+from structures.mask import BitmapMasks, PolygonMasks
 
 
 @TRANSFORMS.register_module()
@@ -129,7 +133,7 @@ class LoadMultiChannelImageFromFiles(BaseTransform):
         for name in results['img_path']:
             img_bytes = get(name, backend_args=self.backend_args)
             img.append(
-                mmcv.imfrombytes(
+                imopts.imfrombytes(
                     img_bytes,
                     flag=self.color_type,
                     backend=self.imdecode_backend))
@@ -406,7 +410,7 @@ class LoadAnnotations(MMCV_LoadAnnotations):
 
         img_bytes = get(
             results['seg_map_path'], backend_args=self.backend_args)
-        gt_semantic_seg = mmcv.imfrombytes(
+        gt_semantic_seg = imopts.imfrombytes(
             img_bytes, flag='unchanged',
             backend=self.imdecode_backend).squeeze()
 
@@ -601,7 +605,7 @@ class LoadPanopticAnnotations(LoadAnnotations):
 
         img_bytes = get(
             results['seg_map_path'], backend_args=self.backend_args)
-        pan_png = mmcv.imfrombytes(
+        pan_png = imopts.imfrombytes(
             img_bytes, flag='color', channel_order='rgb').squeeze()
         pan_png = self.rgb2id(pan_png)
 

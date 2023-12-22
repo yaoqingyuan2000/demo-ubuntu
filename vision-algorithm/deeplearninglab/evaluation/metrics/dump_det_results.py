@@ -2,11 +2,11 @@
 import warnings
 from typing import Sequence
 
-from mmengine.evaluator import DumpResults
-from mmengine.evaluator.metric import _to_cpu
+from engine.evaluator import DumpResults
+from engine.evaluator.metric import _to_cpu
 
-from mmdet.registry import METRICS
-from mmdet.structures.mask import encode_mask_results
+from registry import METRICS
+from structures.mask import encode_mask_results
 
 
 @METRICS.register_module()

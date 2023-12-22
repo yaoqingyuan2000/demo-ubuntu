@@ -2,8 +2,8 @@
 from multiprocessing import Pool
 
 import numpy as np
-from mmengine.logging import print_log
-from mmengine.utils import is_str
+from engine.logging import print_log
+from ...utils import is_str
 from terminaltables import AsciiTable
 
 from .bbox_overlaps import bbox_overlaps

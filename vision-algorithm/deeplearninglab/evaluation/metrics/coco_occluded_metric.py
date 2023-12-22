@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, List, Optional, Union
 
-import mmengine
+
 import numpy as np
-from mmengine.fileio import load
-from mmengine.logging import print_log
+from engine.fileio import load
+from engine.logging import print_log
+
 from pycocotools import mask as coco_mask
 from terminaltables import AsciiTable
 
-from mmdet.registry import METRICS
+from registry import METRICS
 from .coco_metric import CocoMetric
 
 

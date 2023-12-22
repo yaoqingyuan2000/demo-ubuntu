@@ -5,11 +5,11 @@ from typing import Dict, Optional, Sequence, Union
 
 import numpy as np
 import torch
-from mmcv import imwrite
-from mmengine.dist import is_main_process
-from mmengine.evaluator import BaseMetric
-from mmengine.logging import MMLogger, print_log
-from mmengine.utils import mkdir_or_exist
+from ...utils.image import imwrite
+from engine.dist import is_main_process
+from engine.evaluator import BaseMetric
+from engine.logging import MMLogger, print_log
+from ...utils import mkdir_or_exist
 from PIL import Image
 
 try:
@@ -17,7 +17,7 @@ try:
 except ImportError:
     PrettyTable = None
 
-from mmdet.registry import METRICS
+from registry import METRICS
 
 
 @METRICS.register_module()

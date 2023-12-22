@@ -13,7 +13,7 @@ from typing import Callable, List, Optional, Sequence, Union
 
 from torch.optim import Optimizer
 
-from mmengine.logging import print_log
+from ..logging import print_log
 from optimizers import BaseOptimWrapper
 from registry import PARAM_SCHEDULERS
 

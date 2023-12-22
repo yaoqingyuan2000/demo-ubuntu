@@ -14,13 +14,15 @@ from torch._utils import (_flatten_dense_tensors, _take_tensors,
                           _unflatten_dense_tensors)
 from torch.distributed import ProcessGroup
 
-import mmengine
+
 from .utils import (get_world_size, get_rank, get_backend, get_dist_info,
                     get_default_group, barrier, get_data_device,
                     get_comm_device, cast_data_device)
-from mmengine.utils import digit_version
-from mmengine.utils.dl_utils import TORCH_VERSION
-from mmengine.device import is_npu_available
+
+from ...utils import digit_version
+from ...utils import TORCH_VERSION
+
+from ..device import is_npu_available
 
 
 def _get_reduce_op(name: str) -> torch_dist.ReduceOp:

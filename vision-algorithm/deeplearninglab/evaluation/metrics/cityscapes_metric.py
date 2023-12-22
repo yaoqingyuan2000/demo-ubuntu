@@ -6,19 +6,19 @@ import tempfile
 from collections import OrderedDict
 from typing import Dict, Optional, Sequence
 
-import mmcv
+from ...utils.image import imwrite
 import numpy as np
-from mmengine.dist import is_main_process
-from mmengine.evaluator import BaseMetric
-from mmengine.logging import MMLogger
+from engine.dist import is_main_process
+from engine.evaluator import BaseMetric
+from engine.logging import MMLogger
 
-from mmdet.registry import METRICS
+from registry import METRICS
 
 try:
     import cityscapesscripts.evaluation.evalInstanceLevelSemanticLabeling as CSEval  # noqa: E501
     import cityscapesscripts.helpers.labels as CSLabels
 
-    from mmdet.evaluation.functional import evaluateImgLists
+    from evaluation.functional import evaluateImgLists
     HAS_CITYSCAPESAPI = True
 except ImportError:
     HAS_CITYSCAPESAPI = False
@@ -150,7 +150,7 @@ class CityScapesMetric(BaseMetric):
                     png_filename = osp.join(
                         self.outfile_prefix,
                         basename + f'_{i}_{class_name}.png')
-                    mmcv.imwrite(mask, png_filename)
+                    imwrite(mask, png_filename)
                     f.write(f'{osp.basename(png_filename)} '
                             f'{class_id} {mask_score}\n')
 

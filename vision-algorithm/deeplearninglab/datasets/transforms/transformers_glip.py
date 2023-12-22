@@ -1,12 +1,11 @@
-# Copyright (c) OpenMMLab. All rights reserved.
-import mmcv
+
 import numpy as np
-from mmcv.transforms import BaseTransform
+from .base import BaseTransform
 
-from mmdet.registry import TRANSFORMS
-from mmdet.structures.bbox import HorizontalBoxes, autocast_box_type
+from registry import TRANSFORMS
+from structures.bbox import HorizontalBoxes, autocast_box_type
 from .transforms import RandomFlip
-
+from ...utils import image as imopts
 
 @TRANSFORMS.register_module()
 class GTBoxSubOne_GLIP(BaseTransform):
@@ -39,7 +38,7 @@ class RandomFlip_GLIP(RandomFlip):
     def _flip(self, results: dict) -> None:
         """Flip images, bounding boxes, and semantic segmentation map."""
         # flip image
-        results['img'] = mmcv.imflip(
+        results['img'] = imopts.imflip(
             results['img'], direction=results['flip_direction'])
 
         img_shape = results['img'].shape[:2]
@@ -59,7 +58,7 @@ class RandomFlip_GLIP(RandomFlip):
 
         # flip segs
         if results.get('gt_seg_map', None) is not None:
-            results['gt_seg_map'] = mmcv.imflip(
+            results['gt_seg_map'] = imopts.imflip(
                 results['gt_seg_map'], direction=results['flip_direction'])
 
         # record homography matrix for flip

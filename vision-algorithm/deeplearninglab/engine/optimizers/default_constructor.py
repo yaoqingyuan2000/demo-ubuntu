@@ -7,11 +7,12 @@ import torch
 import torch.nn as nn
 from torch.nn import GroupNorm, LayerNorm
 
-from mmengine.logging import print_log
+from ..logging import print_log
 
-from mmengine.utils import is_list_of
-from mmengine.utils.dl_utils import mmcv_full_available
-from mmengine.utils.dl_utils.parrots_wrapper import _BatchNorm, _InstanceNorm
+from ...utils import is_list_of
+
+
+from ...utils.parrots_wrapper import _BatchNorm, _InstanceNorm
 
 
 from registry import (OPTIM_WRAPPER_CONSTRUCTORS, OPTIM_WRAPPERS, OPTIMIZERS)

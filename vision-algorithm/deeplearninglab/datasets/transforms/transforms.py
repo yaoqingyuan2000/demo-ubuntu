@@ -6,23 +6,30 @@ import warnings
 from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
-import mmcv
 import numpy as np
-from mmcv.image import imresize
-from mmcv.image.geometric import _scale_size
-from mmcv.transforms import BaseTransform
+from numpy import random
+
+
+from datasets import BaseDataset
+from registry import TRANSFORMS
+from .base import BaseTransform
+from .utils import avoid_cache_randomness, cache_randomness
+
+from ...utils.image import imresize
+from ...utils.image.geometric import _scale_size
+
 from mmcv.transforms import Pad as MMCV_Pad
 from mmcv.transforms import RandomFlip as MMCV_RandomFlip
 from mmcv.transforms import Resize as MMCV_Resize
-from mmcv.transforms.utils import avoid_cache_randomness, cache_randomness
-from mmengine.dataset import BaseDataset
-from mmengine.utils import is_str
-from numpy import random
 
-from mmdet.registry import TRANSFORMS
-from mmdet.structures.bbox import HorizontalBoxes, autocast_box_type
-from mmdet.structures.mask import BitmapMasks, PolygonMasks
-from mmdet.utils import log_img_scale
+
+from ..utils import is_str
+
+from structures.bbox import HorizontalBoxes, autocast_box_type
+from structures.mask import BitmapMasks, PolygonMasks
+
+
+from .utils import log_img_scale
 
 try:
     from imagecorruptions import corrupt

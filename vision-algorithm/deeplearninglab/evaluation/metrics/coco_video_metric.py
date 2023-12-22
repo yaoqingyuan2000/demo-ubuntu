@@ -2,9 +2,9 @@
 import warnings
 from typing import Sequence
 
-from mmengine.dist import broadcast_object_list, is_main_process
+from engine.dist import broadcast_object_list, is_main_process
 
-from mmdet.registry import METRICS
+from registry import METRICS
 from .base_video_metric import collect_tracking_results
 from .coco_metric import CocoMetric
 

@@ -1,9 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Dict, Optional, Union
 
-from optimizers import _ParamScheduler
+
+from ...utils import is_list_of
+
+from engine.schedulers import _ParamScheduler
 from registry import HOOKS
-from utils import is_list_of
 from .hook import Hook
 
 DATA_BATCH = Optional[Union[dict, tuple, list]]

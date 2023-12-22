@@ -14,13 +14,15 @@ import cv2
 import numpy as np
 import torch
 
-from mmengine.config import Config, ConfigDict
-from mmengine.fileio import dump
-from mmengine.hooks.logger_hook import SUFFIX_TYPE
-from mmengine.logging import MMLogger, print_log
-from mmengine.registry import VISBACKENDS
-from mmengine.utils import digit_version, scandir
-from mmengine.utils.dl_utils import TORCH_VERSION
+from configs import Config, ConfigDict
+from engine.fileio import dump
+from engine.logging import MMLogger, print_log
+from registry import VISBACKENDS
+
+
+from engine.hooks.logger_hook import SUFFIX_TYPE
+from ..utils import digit_version, scandir
+from ..utils import TORCH_VERSION
 
 
 def force_init_env(old_func: Callable) -> Any:

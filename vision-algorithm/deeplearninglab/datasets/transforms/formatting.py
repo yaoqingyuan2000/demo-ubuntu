@@ -2,13 +2,13 @@
 from typing import Optional, Sequence
 
 import numpy as np
-from mmcv.transforms import to_tensor
-from mmcv.transforms.base import BaseTransform
-from mmengine.structures import InstanceData, PixelData
+from .transforms import to_tensor
+from .base import BaseTransform
+from structures import InstanceData, PixelData
 
-from mmdet.registry import TRANSFORMS
-from mmdet.structures import DetDataSample, ReIDDataSample, TrackDataSample
-from mmdet.structures.bbox import BaseBoxes
+from registry import TRANSFORMS
+from structures import DetDataSample, ReIDDataSample, TrackDataSample
+from structures.bbox import BaseBoxes
 
 
 @TRANSFORMS.register_module()

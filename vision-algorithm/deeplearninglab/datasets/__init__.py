@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .base_dataset import BaseDataset, Compose, force_full_init
 from .dataset_wrapper import ClassBalancedDataset, ConcatDataset, RepeatDataset
-from .samplers import DefaultSampler, InfiniteSampler
+from samplers import DefaultSampler, InfiniteSampler
 from .utils import (COLLATE_FUNCTIONS, default_collate, pseudo_collate,
                     worker_init_fn)
 

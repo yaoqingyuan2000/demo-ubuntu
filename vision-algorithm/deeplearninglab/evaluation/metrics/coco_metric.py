@@ -8,14 +8,14 @@ from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import torch
-from mmengine.evaluator import BaseMetric
-from mmengine.fileio import dump, get_local_path, load
-from mmengine.logging import MMLogger
+from engine.evaluator import BaseMetric
+from engine.fileio import dump, get_local_path, load
+from engine.logging import MMLogger
 from terminaltables import AsciiTable
 
 from mmdet.datasets.api_wrappers import COCO, COCOeval, COCOevalMP
-from mmdet.registry import METRICS
-from mmdet.structures.mask import encode_mask_results
+from registry import METRICS
+from structures.mask import encode_mask_results
 from ..functional import eval_recalls
 
 

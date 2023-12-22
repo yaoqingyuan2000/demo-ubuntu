@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from configs import Config, ConfigDict
-from utils import ManagerMixin
+from ..utils import ManagerMixin
 from .registry import Registry
 
 if TYPE_CHECKING:

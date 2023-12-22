@@ -3,9 +3,9 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Optional, Union
 
-from mmcv.transforms import BaseTransform
+from .base import BaseTransform
 
-from mmdet.registry import TRANSFORMS
+from registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()

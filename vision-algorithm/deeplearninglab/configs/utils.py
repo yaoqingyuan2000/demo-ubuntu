@@ -8,8 +8,8 @@ from collections import defaultdict
 from importlib.util import find_spec
 from typing import List, Optional, Tuple, Union
 
-from mmengine.fileio import load
-from mmengine.utils import check_file_exist
+from engine.fileio import load
+from ..utils import check_file_exist
 
 PYTHON_ROOT_DIR = osp.dirname(osp.dirname(sys.executable))
 

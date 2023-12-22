@@ -5,12 +5,16 @@ from typing import Any, List, Optional, Sequence, Union
 
 from torch import Tensor
 
-from mmengine.dist import (broadcast_object_list, collect_results,
-                           is_main_process)
-from mmengine.fileio import dump
-from mmengine.logging import print_log
-from mmengine.registry import METRICS
-from mmengine.structures import BaseDataElement
+
+from engine.logging import print_log
+from registry import METRICS
+from structures import BaseDataElement
+
+from ..dist import (broadcast_object_list, collect_results,
+                    is_main_process)
+
+from ..fileio import dump
+
 
 
 class BaseMetric(metaclass=ABCMeta):

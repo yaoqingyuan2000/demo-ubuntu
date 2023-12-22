@@ -8,14 +8,14 @@ from multiprocessing import Process, Queue
 from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
-from mmengine.evaluator import BaseMetric
-from mmengine.fileio import dump, get_text, load
-from mmengine.logging import MMLogger
+from engine.evaluator import BaseMetric
+from engine.fileio import dump, get_text, load
+from engine.logging import MMLogger
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_bipartite_matching
 
-from mmdet.evaluation.functional.bbox_overlaps import bbox_overlaps
-from mmdet.registry import METRICS
+from evaluation.functional.bbox_overlaps import bbox_overlaps
+from registry import METRICS
 
 PERSON_CLASSES = ['background', 'person']
 

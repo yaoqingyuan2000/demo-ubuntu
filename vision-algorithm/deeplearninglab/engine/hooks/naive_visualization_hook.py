@@ -7,9 +7,10 @@ import numpy as np
 
 from .hook import Hook
 from registry import HOOKS
-from utils.dl_utils import tensor2imgs
-
 DATA_BATCH = Optional[Union[dict, tuple, list]]
+
+
+from ...utils import tensor2imgs
 
 
 # TODO: Due to interface changes, the current class

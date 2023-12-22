@@ -3,13 +3,14 @@
 from typing import Optional, Union
 
 import cv2
-import mmcv
-import numpy as np
-from mmcv.transforms import BaseTransform
-from mmcv.transforms.utils import cache_randomness
 
-from mmdet.registry import TRANSFORMS
-from mmdet.structures.bbox import autocast_box_type
+import numpy as np
+from .base import BaseTransform
+
+from .utils import cache_randomness
+from ...utils import image as imopts
+from registry import TRANSFORMS
+from structures.bbox import autocast_box_type
 from .augment_wrappers import _MAX_LEVEL, level_to_mag
 
 
@@ -285,7 +286,7 @@ class ShearX(GeomTransform):
 
     def _transform_img(self, results: dict, mag: float) -> None:
         """Shear the image horizontally."""
-        results['img'] = mmcv.imshear(
+        results['img'] = imopts.imshear(
             results['img'],
             mag,
             direction='horizontal',
@@ -303,7 +304,7 @@ class ShearX(GeomTransform):
 
     def _transform_seg(self, results: dict, mag: float) -> None:
         """Shear the segmentation map horizontally."""
-        results['gt_seg_map'] = mmcv.imshear(
+        results['gt_seg_map'] = imopts.imshear(
             results['gt_seg_map'],
             mag,
             direction='horizontal',
@@ -399,7 +400,7 @@ class ShearY(GeomTransform):
 
     def _transform_img(self, results: dict, mag: float) -> None:
         """Shear the image vertically."""
-        results['img'] = mmcv.imshear(
+        results['img'] = imopts.imshear(
             results['img'],
             mag,
             direction='vertical',
@@ -417,7 +418,7 @@ class ShearY(GeomTransform):
 
     def _transform_seg(self, results: dict, mag: float) -> None:
         """Shear the segmentation map vertically."""
-        results['gt_seg_map'] = mmcv.imshear(
+        results['gt_seg_map'] = imopts.imshear(
             results['gt_seg_map'],
             mag,
             direction='vertical',
@@ -509,7 +510,7 @@ class Rotate(GeomTransform):
 
     def _transform_img(self, results: dict, mag: float) -> None:
         """Rotate the image."""
-        results['img'] = mmcv.imrotate(
+        results['img'] = imopts.imrotate(
             results['img'],
             mag,
             border_value=self.img_border_value,
@@ -525,7 +526,7 @@ class Rotate(GeomTransform):
 
     def _transform_seg(self, results: dict, mag: float) -> None:
         """Rotate the segmentation map."""
-        results['gt_seg_map'] = mmcv.imrotate(
+        results['gt_seg_map'] = imopts.imrotate(
             results['gt_seg_map'],
             mag,
             border_value=self.seg_ignore_label,
@@ -615,7 +616,7 @@ class TranslateX(GeomTransform):
     def _transform_img(self, results: dict, mag: float) -> None:
         """Translate the image horizontally."""
         mag = int(results['img_shape'][1] * mag)
-        results['img'] = mmcv.imtranslate(
+        results['img'] = imopts.imtranslate(
             results['img'],
             mag,
             direction='horizontal',
@@ -635,7 +636,7 @@ class TranslateX(GeomTransform):
     def _transform_seg(self, results: dict, mag: float) -> None:
         """Translate the segmentation map horizontally."""
         mag = int(results['img_shape'][1] * mag)
-        results['gt_seg_map'] = mmcv.imtranslate(
+        results['gt_seg_map'] = imopts.imtranslate(
             results['gt_seg_map'],
             mag,
             direction='horizontal',
@@ -726,7 +727,7 @@ class TranslateY(GeomTransform):
     def _transform_img(self, results: dict, mag: float) -> None:
         """Translate the image vertically."""
         mag = int(results['img_shape'][0] * mag)
-        results['img'] = mmcv.imtranslate(
+        results['img'] = imopts.imtranslate(
             results['img'],
             mag,
             direction='vertical',
@@ -746,7 +747,7 @@ class TranslateY(GeomTransform):
     def _transform_seg(self, results: dict, mag: float) -> None:
         """Translate segmentation map vertically."""
         mag = int(results['img_shape'][0] * mag)
-        results['gt_seg_map'] = mmcv.imtranslate(
+        results['gt_seg_map'] = imopts.imtranslate(
             results['gt_seg_map'],
             mag,
             direction='vertical',

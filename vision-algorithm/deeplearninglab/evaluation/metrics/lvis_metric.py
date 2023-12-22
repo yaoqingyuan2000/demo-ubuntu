@@ -7,12 +7,12 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
-from mmengine.fileio import get_local_path
-from mmengine.logging import MMLogger
+from engine.fileio import get_local_path
+from engine.logging import MMLogger
 from terminaltables import AsciiTable
 
-from mmdet.registry import METRICS
-from mmdet.structures.mask import encode_mask_results
+from registry import METRICS
+from structures.mask import encode_mask_results
 from ..functional import eval_recalls
 from .coco_metric import CocoMetric
 

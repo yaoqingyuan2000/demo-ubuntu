@@ -17,38 +17,51 @@ from torch.nn.parallel.distributed import DistributedDataParallel
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-import mmengine
 from configs import Config, ConfigDict
+from engine.evaluator import Evaluator
+
 from datasets import worker_init_fn as default_worker_init_fn
-from mmengine.device import get_device
-from mmengine.dist import (broadcast, get_dist_info, get_rank, get_world_size,
+from engine.device import get_device
+from engine.dist import (broadcast, get_dist_info, get_rank, get_world_size,
                            init_dist, is_distributed, master_only)
-from mmengine.evaluator import Evaluator
-from mmengine.fileio import FileClient, join_path
-from mmengine.hooks import Hook
-from mmengine.logging import MessageHub, MMLogger, print_log
-from mmengine.model import (MMDistributedDataParallel, convert_sync_batchnorm,
+
+import engine
+from engine.hooks import Hook
+from engine.fileio import FileClient, join_path
+
+from engine.logging import MessageHub, MMLogger, print_log
+
+
+from registry import (DATA_SAMPLERS, DATASETS, EVALUATOR, FUNCTIONS,
+                        HOOKS, LOG_PROCESSORS, LOOPS, MODEL_WRAPPERS,
+                        MODELS, OPTIM_WRAPPERS, PARAM_SCHEDULERS,
+                        RUNNERS, VISUALIZERS, DefaultScope)
+
+from .base_loop import BaseLoop
+from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
+from .priority import Priority, get_priority
+
+from models import (MMDistributedDataParallel, convert_sync_batchnorm,
                             is_model_wrapper, revert_sync_batchnorm)
+
 from mmengine.model.efficient_conv_bn_eval import \
     turn_on_efficient_conv_bn_eval
-from mmengine.optim import (OptimWrapper, OptimWrapperDict, _ParamScheduler,
-                            build_optim_wrapper)
-from mmengine.registry import (DATA_SAMPLERS, DATASETS, EVALUATOR, FUNCTIONS,
-                               HOOKS, LOG_PROCESSORS, LOOPS, MODEL_WRAPPERS,
-                               MODELS, OPTIM_WRAPPERS, PARAM_SCHEDULERS,
-                               RUNNERS, VISUALIZERS, DefaultScope)
-from mmengine.utils import apply_to, digit_version, get_git_hash, is_seq_of
-from mmengine.utils.dl_utils import (TORCH_VERSION, collect_env,
+from engine.optimizers import (OptimWrapper, OptimWrapperDict, build_optim_wrapper)
+
+from engine.schedulers import _ParamScheduler
+
+from ...utils import (apply_to, digit_version, get_git_hash, is_seq_of,
+                     mkdir_or_exist)
+from ...utils import (TORCH_VERSION, collect_env,
                                      set_multi_processing)
-from mmengine.visualization import Visualizer
+from visualization import Visualizer
 from .activation_checkpointing import turn_on_activation_checkpointing
-from .base_loop import BaseLoop
+
 from .checkpoint import (_load_checkpoint, _load_checkpoint_to_model,
                          find_latest_checkpoint, save_checkpoint,
                          weights_to_cpu)
 from .log_processor import LogProcessor
-from .loops import EpochBasedTrainLoop, IterBasedTrainLoop, TestLoop, ValLoop
-from .priority import Priority, get_priority
+
 from .utils import _get_batch_size, set_random_seed
 
 ConfigType = Union[Dict, Config, ConfigDict]
@@ -2025,7 +2038,7 @@ class Runner:
         # check whether the number of GPU used for current experiment
         # is consistent with resuming from checkpoint
         if 'config' in checkpoint['meta']:
-            config = mmengine.Config.fromstring(
+            config = Config.fromstring(
                 checkpoint['meta']['config'], file_format='.py')
             previous_gpu_ids = config.get('gpu_ids', None)
             if (previous_gpu_ids is not None and len(previous_gpu_ids) > 0
@@ -2216,7 +2229,7 @@ class Runner:
             seed=self.seed,
             experiment_name=self.experiment_name,
             time=time.strftime('%Y%m%d_%H%M%S', time.localtime()),
-            mmengine_version=mmengine.__version__ + get_git_hash())
+            mmengine_version=engine.__version__ + get_git_hash())
 
         if hasattr(self.train_dataloader.dataset, 'metainfo'):
             meta.update(dataset_meta=self.train_dataloader.dataset.metainfo)

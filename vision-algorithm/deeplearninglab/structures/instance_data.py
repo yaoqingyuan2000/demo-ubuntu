@@ -6,11 +6,11 @@ from typing import Any, List, Union
 import numpy as np
 import torch
 
-from mmengine.device import get_device
+from engine.device import get_device
 from .base_data_element import BaseDataElement
 
-BoolTypeTensor: Union[Any]
-LongTypeTensor: Union[Any]
+BoolTypeTensor: Union[torch.BoolTensor, torch.cuda.BoolTensor]
+LongTypeTensor: Union[torch.LongTensor, torch.cuda.LongTensor]
 
 if get_device() == 'npu':
     BoolTypeTensor = Union[torch.BoolTensor, torch.npu.BoolTensor]
@@ -22,12 +22,12 @@ else:
     BoolTypeTensor = Union[torch.BoolTensor, torch.cuda.BoolTensor]
     LongTypeTensor = Union[torch.LongTensor, torch.cuda.LongTensor]
 
-IndexType: Union[Any] = Union[str, slice, int, list, LongTypeTensor,
+IndexType: Union[int, Any] = Union[str, slice, int, list, LongTypeTensor,
                               BoolTypeTensor, np.ndarray]
 
 
 # Modified from
-# https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/data_structures/instance_data.py # noqa
+
 class InstanceData(BaseDataElement):
     """Data structure for instance-level annotations or predictions.
 

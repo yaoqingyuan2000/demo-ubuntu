@@ -2,9 +2,9 @@
 from typing import Tuple
 
 import numpy as np
-from mmcv.transforms import BaseTransform
+from .base import BaseTransform
 
-from mmdet.registry import TRANSFORMS
+from registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()

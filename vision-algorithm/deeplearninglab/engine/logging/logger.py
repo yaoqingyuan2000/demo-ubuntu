@@ -12,8 +12,8 @@ from typing import Dict, Optional, Union
 
 from termcolor import colored
 
-from mmengine.utils import ManagerMixin
-from mmengine.utils.manager import _accquire_lock, _release_lock
+from ...utils import ManagerMixin
+from ...utils.manager import _accquire_lock, _release_lock
 
 
 class FilterDuplicateWarning(logging.Filter):

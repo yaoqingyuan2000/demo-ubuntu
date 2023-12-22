@@ -3,13 +3,13 @@ import os
 import os.path as osp
 from typing import Optional, Sequence
 
-from mmengine.dist import is_main_process
-from mmengine.evaluator import BaseMetric
-from mmengine.fileio import dump
-from mmengine.logging import MMLogger
-from mmengine.structures import InstanceData
+from engine.dist import is_main_process
+from engine.evaluator import BaseMetric
+from engine.fileio import dump
+from engine.logging import MMLogger
+from structures import InstanceData
 
-from mmdet.registry import METRICS
+from registry import METRICS
 
 
 @METRICS.register_module()
