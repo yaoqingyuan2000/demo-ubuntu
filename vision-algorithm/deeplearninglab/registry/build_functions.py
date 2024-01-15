@@ -61,7 +61,7 @@ def build_from_cfg(
         object: The constructed object.
     """
     # Avoid circular import
-    from ..logging import print_log
+    from engine.logging import print_log
 
     if not isinstance(cfg, (dict, ConfigDict, Config)):
         raise TypeError(f'cfg should be a dict, ConfigDict or Config, but got {type(cfg)}')
@@ -145,8 +145,8 @@ def build_runner_from_cfg(cfg: Union[dict, ConfigDict, Config],
     Returns:
         object: The constructed runner object.
     """
-    from ..config import Config, ConfigDict
-    from ..logging import print_log
+    from configs import Config, ConfigDict
+    from engine.logging import print_log
 
     assert isinstance(cfg, (dict, ConfigDict, Config)), f'cfg should be a dict, ConfigDict or Config, but got {type(cfg)}'
     assert isinstance(registry, Registry), ('registry should be a mmengine.Registry object', f'but got {type(registry)}')
@@ -199,7 +199,7 @@ def build_model_from_cfg(
     Returns:
         nn.Module: A built nn.Module.
     """
-    from ..model import Sequential
+    from models.base_module import Sequential
     if isinstance(cfg, list):
         modules = [
             build_from_cfg(_cfg, registry, default_args) for _cfg in cfg
